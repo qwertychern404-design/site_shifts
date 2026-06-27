@@ -57,27 +57,73 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function makeDay(active = true): DayData | null {
-  if (!active) return null;
-  const h = 7 + Math.floor(Math.random() * 5);
-  const dur = 7 + Math.floor(Math.random() * 4);
-  return {
-    posts: 4 + Math.floor(Math.random() * 16),
-    deleted: Math.floor(Math.random() * 4),
-    start: `${pad(h)}:00`,
-    end: `${pad(Math.min(h + dur, 23))}:00`,
-    karma: 8000 + Math.floor(Math.random() * 72000),
-    karmaGrowth: -200 + Math.floor(Math.random() * 2700),
-  };
-}
-
 function acct(username: string, banned = false): Account {
   return {
     id: username,
     username,
     banned,
-    days: Array.from({ length: 7 }, () => makeDay(Math.random() > 0.07)),
+    days: Array.from({ length: 7 }, () => null), // время/посты назначаются позже, в assignSchedules()
   };
+}
+
+// --- Реалистичное расписание смен ---
+// Смена начинается не раньше 14:00, на каждый аккаунт уходит ~40 минут,
+// аккаунты одного работника (по всем его моделям) идут строго по очереди —
+// один человек не может вести два аккаунта параллельно.
+// Максимум — 06:00 следующего дня.
+
+const SHIFT_START_MIN = 14 * 60;        // 14:00
+const SHIFT_HARD_END_MIN = 30 * 60;     // 06:00 следующего дня (24:00 + 6:00)
+const SLOT_DURATION = 40;               // минут на аккаунт
+const SKIP_CHANCE = 0.07;               // вероятность, что аккаунт сегодня не работал
+
+function formatMinutes(totalMinutes: number) {
+  const m = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
+  return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+}
+
+function makePostStats() {
+  return {
+    posts: 4 + Math.floor(Math.random() * 16),
+    deleted: Math.floor(Math.random() * 4),
+    karma: 8000 + Math.floor(Math.random() * 72000),
+    karmaGrowth: -200 + Math.floor(Math.random() * 2700),
+  };
+}
+
+// Назначает время каждому аккаунту работника на конкретный день,
+// двигаясь по очереди и не допуская пересечений
+function assignWorkerDaySchedule(worker: Worker, d: number) {
+  const flatAccounts = worker.models.flatMap(m => m.accounts);
+  // случайное начало смены: между 14:00 и 19:00
+  let cursor = SHIFT_START_MIN + Math.floor(Math.random() * 6) * 60;
+
+  for (const account of flatAccounts) {
+    // время вышло за допустимое окно (до 06:00) — на сегодня смена окончена
+    if (cursor + SLOT_DURATION > SHIFT_HARD_END_MIN) {
+      account.days[d] = null;
+      continue;
+    }
+    // аккаунт сегодня не работал
+    if (Math.random() < SKIP_CHANCE) {
+      account.days[d] = null;
+      continue;
+    }
+    const start = cursor;
+    const end = cursor + SLOT_DURATION;
+    account.days[d] = {
+      ...makePostStats(),
+      start: formatMinutes(start),
+      end: formatMinutes(end),
+    };
+    cursor = end; // следующий аккаунт начинается ровно когда закончился этот
+  }
+}
+
+function assignAllSchedules(workers: Worker[]) {
+  workers.forEach(worker => {
+    for (let d = 0; d < 7; d++) assignWorkerDaySchedule(worker, d);
+  });
 }
 
 // Helper: создаёт N аккаунтов с именами account_1, account_2, ...
@@ -138,6 +184,9 @@ const DATA: Worker[] = [
     ],
   },
 ];
+
+// Назначаем реалистичное расписание (время, посты, удалённые) каждому работнику
+assignAllSchedules(DATA);
 
 // Aggregation helpers
 

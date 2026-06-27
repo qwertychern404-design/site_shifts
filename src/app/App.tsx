@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -384,16 +384,92 @@ function Tooltip({ tip }: { tip: TooltipState }) {
   );
 }
 
+// MultiSelectDropdown — выбор нескольких значений чекбоксами
+
+interface MultiSelectOption { id: string; label: string; }
+
+function MultiSelectDropdown({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  options: MultiSelectOption[];
+  selected: Set<string>;
+  onChange: (next: Set<string>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const toggle = (id: string) => {
+    const n = new Set(selected);
+    n.has(id) ? n.delete(id) : n.add(id);
+    onChange(n);
+  };
+
+  const summary = selected.size === 0
+    ? label
+    : selected.size === 1
+      ? options.find(o => o.id === [...selected][0])?.label ?? label
+      : `${label}: ${selected.size}`;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(p => !p)}
+        className="flex items-center gap-1.5 pl-2.5 pr-2 h-7 text-xs text-[#444456] border border-[#E0E0EC] rounded-md bg-white hover:bg-[#F5F5FA] whitespace-nowrap"
+      >
+        <span>{summary}</span>
+        <ChevronDown size={10} className="text-[#999]" />
+      </button>
+      {open && (
+        <div className="absolute z-40 mt-1 min-w-[180px] max-h-64 overflow-auto bg-white border border-[#E0E0EC] rounded-md shadow-lg py-1">
+          <button
+            onClick={() => onChange(new Set())}
+            className="w-full text-left px-3 py-1.5 text-xs text-[#5E6AD2] hover:bg-[#F5F5FA] font-medium"
+          >
+            All
+          </button>
+          <div className="h-px bg-[#EAEAF2] my-1" />
+          {options.map(opt => (
+            <label
+              key={opt.id}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs text-[#444456] hover:bg-[#F5F5FA] cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={selected.has(opt.id)}
+                onChange={() => toggle(opt.id)}
+                className="accent-[#5E6AD2]"
+              />
+              <span className="truncate">{opt.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Main App
 
 export default function App() {
-  // По умолчанию всё свёрнуто
-  const [expandedWorkers, setExpandedWorkers] = useState<Set<string>>(new Set());
+  // По умолчанию открыты только модели (воркеры развёрнуты, аккаунты скрыты)
+  const [expandedWorkers, setExpandedWorkers] = useState<Set<string>>(new Set(DATA.map(w => w.id)));
   const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set());
   const [showDeleted, setShowDeleted] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(26);
-  const [workerFilter, setWorkerFilter] = useState("all");
-  const [modelFilter, setModelFilter] = useState("all");
+  const [workerFilter, setWorkerFilter] = useState<Set<string>>(new Set());
+  const [modelFilter, setModelFilter] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [timeHover, setTimeHover] = useState<TimeHover | null>(null);
@@ -428,7 +504,7 @@ export default function App() {
 
   const filteredWorkers = DATA.filter(w => {
     if (!showDeleted && w.deleted) return false;
-    if (workerFilter !== "all" && w.id !== workerFilter) return false;
+    if (workerFilter.size > 0 && !workerFilter.has(w.id)) return false;
     if (searchLower) {
       const matchWorker = w.name.toLowerCase().includes(searchLower);
       const matchModel = w.models.some(m =>
@@ -501,20 +577,18 @@ export default function App() {
             <button onClick={expandAllAccounts} className={btnBase}>Expand accounts</button>
             <button onClick={collapseAllAccounts} className={btnBase}>Collapse accounts</button>
             <div className="w-px h-4 bg-[#E4E4EC] mx-1" />
-            <div className="relative">
-              <select value={workerFilter} onChange={e => setWorkerFilter(e.target.value)} className="pl-2.5 pr-6 h-7 text-xs text-[#444456] border border-[#E0E0EC] rounded-md bg-white hover:bg-[#F5F5FA] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#5E6AD2]">
-                <option value="all">All workers</option>
-                {DATA.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-              </select>
-              <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#999] pointer-events-none" />
-            </div>
-            <div className="relative">
-              <select value={modelFilter} onChange={e => setModelFilter(e.target.value)} className="pl-2.5 pr-6 h-7 text-xs text-[#444456] border border-[#E0E0EC] rounded-md bg-white hover:bg-[#F5F5FA] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#5E6AD2]">
-                <option value="all">All models</option>
-                {DATA.flatMap(w => w.models.map(m => <option key={m.id} value={m.id}>{m.name} ({w.name})</option>))}
-              </select>
-              <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#999] pointer-events-none" />
-            </div>
+            <MultiSelectDropdown
+              label="All workers"
+              options={DATA.map(w => ({ id: w.id, label: w.name }))}
+              selected={workerFilter}
+              onChange={setWorkerFilter}
+            />
+            <MultiSelectDropdown
+              label="All models"
+              options={DATA.flatMap(w => w.models.map(m => ({ id: m.id, label: `${m.name} (${w.name})` })))}
+              selected={modelFilter}
+              onChange={setModelFilter}
+            />
           </div>
           <div className="relative">
             <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#BCBCCC]" />
@@ -584,7 +658,7 @@ export default function App() {
             {filteredWorkers.map((worker, wi) => {
               const isWorkerExpanded = expandedWorkers.has(worker.id);
               const wShifts = workerWeekShifts(worker, shifts);
-              const visibleModels = worker.models.filter(m => modelFilter === "all" || m.id === modelFilter);
+              const visibleModels = worker.models.filter(m => modelFilter.size === 0 || modelFilter.has(m.id));
 
               return (
                 <WorkerSection

@@ -84,7 +84,7 @@ const DATA: Worker[] = [
   {
     id: "oleg", name: "Oleg", color: "#6366f1",
     models: [
-      { id: "oleg_joy", name: "Joy", shifts: [1, 1, 1, 1, 0.5, 0.5, 0], accounts: [acct("u/JoyHop"), acct("u/JoySmile"), acct("u/JoyCute")] },
+      { id: "oleg_isabella", name: "Isabella", shifts: [1, 1, 1, 1, 0.5, 0.5, 0], accounts: [acct("u/JoyHop"), acct("u/JoySmile"), acct("u/JoyCute")] },
       { id: "oleg_hannah", name: "Hannah", shifts: [1, 0.5, 1, 1, 1, 0, 0], accounts: [acct("u/HannahRose"), acct("u/HannahBlue", true), acct("u/HannahGlow")] },
       { id: "oleg_blossom", name: "Blossom", shifts: [0.5, 1, 0.5, 1, 0.5, 0, 0], accounts: [acct("u/BlossomPink"), acct("u/BlossomSky"), acct("u/BlossomVine")] },
     ],
@@ -368,7 +368,7 @@ function Tooltip({ tip }: { tip: TooltipState }) {
 
 export default function App() {
   const [expandedWorkers, setExpandedWorkers] = useState<Set<string>>(new Set(["oleg"]));
-  const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set(["oleg_joy"]));
+  const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set(["oleg_isabella"]));
   const [showDeleted, setShowDeleted] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(26);
   const [workerFilter, setWorkerFilter] = useState("all");

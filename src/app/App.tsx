@@ -534,7 +534,6 @@ export default function App() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(26);
   const [workerFilter, setWorkerFilter] = useState<Set<string>>(new Set());
-  const [modelFilter, setModelFilter] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [timeHover, setTimeHover] = useState<TimeHover | null>(null);
@@ -648,12 +647,6 @@ export default function App() {
               selected={workerFilter}
               onChange={setWorkerFilter}
             />
-            <MultiSelectDropdown
-              label="All models"
-              options={DATA.flatMap(w => w.models.map(m => ({ id: m.id, label: `${m.name} (${w.name})` })))}
-              selected={modelFilter}
-              onChange={setModelFilter}
-            />
           </div>
           <div className="relative">
             <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#BCBCCC]" />
@@ -723,7 +716,7 @@ export default function App() {
             {filteredWorkers.map((worker, wi) => {
               const isWorkerExpanded = expandedWorkers.has(worker.id);
               const wShifts = workerWeekShifts(worker, shifts);
-              const visibleModels = worker.models.filter(m => modelFilter.size === 0 || modelFilter.has(m.id));
+              const visibleModels = worker.models;
 
               return (
                 <WorkerSection

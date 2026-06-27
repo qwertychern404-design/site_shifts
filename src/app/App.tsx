@@ -80,40 +80,61 @@ function acct(username: string, banned = false): Account {
   };
 }
 
+// Helper: создаёт N аккаунтов с именами account_1, account_2, ...
+// bannedIndex (1-based) — номер аккаунта, который должен быть в бане
+function accts(count: number, bannedIndex?: number): Account[] {
+  return Array.from({ length: count }, (_, i) =>
+    acct(`u/account_${i + 1}`, bannedIndex === i + 1)
+  );
+}
+
 const DATA: Worker[] = [
   {
     id: "oleg", name: "Oleg", color: "#6366f1",
     models: [
-      { id: "oleg_isabella", name: "Isabella", shifts: [1, 1, 1, 1, 0.5, 0.5, 0], accounts: [acct("u/JoyHop"), acct("u/JoySmile"), acct("u/JoyCute")] },
-      { id: "oleg_hannah", name: "Hannah", shifts: [1, 0.5, 1, 1, 1, 0, 0], accounts: [acct("u/HannahRose"), acct("u/HannahBlue", true), acct("u/HannahGlow")] },
-      { id: "oleg_blossom", name: "Blossom", shifts: [0.5, 1, 0.5, 1, 0.5, 0, 0], accounts: [acct("u/BlossomPink"), acct("u/BlossomSky"), acct("u/BlossomVine")] },
+      { id: "oleg_isabella", name: "Isabella", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(2) },
+      { id: "oleg_missy", name: "Missy", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(2) },
+      { id: "oleg_ren", name: "Ren", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(1) },
     ],
   },
   {
-    id: "dima", name: "Dima", color: "#f59e0b",
+    id: "slava", name: "Slava", color: "#f59e0b",
     models: [
-      { id: "dima_luna", name: "Luna", shifts: [1, 1, 1, 0.5, 1, 0, 0], accounts: [acct("u/LunaStar"), acct("u/LunaMist"), acct("u/LunaDawn")] },
-      { id: "dima_vera", name: "Vera", shifts: [0.5, 1, 1, 1, 0, 0, 0], accounts: [acct("u/VeraLight"), acct("u/VeraWave", true), acct("u/VeraField")] },
+      { id: "slava_mimi", name: "Mimi", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(2) },
+      { id: "slava_kumi", name: "Kumi", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(3) },
     ],
   },
   {
     id: "sofia", name: "Sofia", color: "#10b981",
     models: [
-      { id: "sofia_mia", name: "Mia", shifts: [1, 1, 0.5, 1, 1, 0.5, 0], accounts: [acct("u/MiaSun"), acct("u/MiaCloud"), acct("u/MiaRain")] },
-      { id: "sofia_clara", name: "Clara", shifts: [1, 0.5, 1, 0.5, 1, 0, 0], accounts: [acct("u/ClaraBell"), acct("u/ClaraHill"), acct("u/ClaraFox")] },
+      { id: "sofia_juno", name: "Juno", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(2) },
+      { id: "sofia_hazel", name: "Hazel", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(3) },
+      { id: "sofia_blake", name: "Blake", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(2, 1) },
     ],
   },
   {
-    id: "jenia", name: "Jenia", color: "#ec4899",
+    id: "dima", name: "Dima", color: "#3b82f6",
     models: [
-      { id: "jenia_iris", name: "Iris", shifts: [1, 1, 1, 1, 0.5, 0, 0], accounts: [acct("u/IrisViolet"), acct("u/IrisMorning"), acct("u/IrisDew")] },
-      { id: "jenia_nova", name: "Nova", shifts: [0.5, 0.5, 1, 0, 0, 0, 0], accounts: [acct("u/NovaBlaze"), acct("u/NovaFlash"), acct("u/NovaSpark")] },
+      { id: "dima_coco", name: "Coco", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(3) },
     ],
   },
   {
-    id: "alex", name: "Alex", color: "#8b5cf6", deleted: true,
+    id: "vasia", name: "Vasia", color: "#06b6d4",
     models: [
-      { id: "alex_ruby", name: "Ruby", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: [acct("u/RubyRed"), acct("u/RubyGem")] },
+      { id: "vasia_kitty", name: "Kitty", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(3) },
+    ],
+  },
+  {
+    id: "yaroslav", name: "Yaroslav", color: "#ec4899",
+    models: [
+      { id: "yaroslav_ariana", name: "Ariana", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(3) },
+      { id: "yaroslav_maddie", name: "Maddie", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(2) },
+    ],
+  },
+  {
+    id: "nastia", name: "Nastia", color: "#8b5cf6", deleted: true,
+    models: [
+      { id: "nastia_ruby", name: "Ruby", shifts: [0, 0, 0, 0, 0, 0, 0], accounts: accts(2) },
     ],
   },
 ];
@@ -123,7 +144,7 @@ const DATA: Worker[] = [
 function minT(a: string, b: string) { return a < b ? a : b; }
 function maxT(a: string, b: string) { return a > b ? a : b; }
 
-// Fixed autoShift — correctly maps post counts to shift values
+// autoShift — maps post counts to shift values
 // 0 posts       → 0 shifts
 // 1–15 posts    → 0.5 shifts
 // 16–35 posts   → 1 shift
@@ -152,7 +173,6 @@ function modelDayAgg(model: CRMModel, d: number, shifts: ShiftsMap) {
     deleted: days.reduce((s, x) => s + x.deleted, 0),
     start: days.reduce((s, x) => minT(s, x.start), days[0].start),
     end: days.reduce((s, x) => maxT(s, x.end), days[0].end),
-    // Use stored override if present, otherwise compute from posts
     shift: shifts[`${model.id}_${d}`] !== undefined
       ? shifts[`${model.id}_${d}`]
       : modelDayAutoShift(model, d),
@@ -367,8 +387,9 @@ function Tooltip({ tip }: { tip: TooltipState }) {
 // Main App
 
 export default function App() {
-  const [expandedWorkers, setExpandedWorkers] = useState<Set<string>>(new Set(["oleg"]));
-  const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set(["oleg_isabella"]));
+  // По умолчанию всё свёрнуто
+  const [expandedWorkers, setExpandedWorkers] = useState<Set<string>>(new Set());
+  const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set());
   const [showDeleted, setShowDeleted] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(26);
   const [workerFilter, setWorkerFilter] = useState("all");
@@ -791,7 +812,6 @@ function ModelSection({
         {/* Day cells — model level */}
         {DAYS_SHORT.map((_, d) => {
           const s = modelDayAgg(model, d, shifts);
-          // Effective shift: manual override takes priority, else compute from posts
           const shiftVal = shifts[`${model.id}_${d}`] !== undefined
             ? shifts[`${model.id}_${d}`]
             : modelDayAutoShift(model, d);

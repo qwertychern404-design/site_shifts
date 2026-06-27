@@ -86,8 +86,6 @@ function makePostStats() {
   return {
     posts: 4 + Math.floor(Math.random() * 16),
     deleted: Math.floor(Math.random() * 4),
-    karma: 8000 + Math.floor(Math.random() * 72000),
-    karmaGrowth: -200 + Math.floor(Math.random() * 2700),
   };
 }
 
@@ -113,6 +111,8 @@ function assignWorkerDaySchedule(worker: Worker, d: number) {
     const end = cursor + SLOT_DURATION;
     account.days[d] = {
       ...makePostStats(),
+      karma: 0,
+      karmaGrowth: 0,
       start: formatMinutes(start),
       end: formatMinutes(end),
     };
@@ -123,6 +123,22 @@ function assignWorkerDaySchedule(worker: Worker, d: number) {
 function assignAllSchedules(workers: Worker[]) {
   workers.forEach(worker => {
     for (let d = 0; d < 7; d++) assignWorkerDaySchedule(worker, d);
+    // карма копится последовательно по дням, отдельно на каждом аккаунте:
+    // понедельник 12000 → вторник +200 → среда +300 и т.д.
+    // рост только в дни, когда аккаунт реально работал (day !== null)
+    worker.models.forEach(model => {
+      model.accounts.forEach(account => {
+        let karma = 8000 + Math.floor(Math.random() * 12000); // стартовая база
+        for (let d = 0; d < 7; d++) {
+          const day = account.days[d];
+          if (!day) continue;
+          const growth = 100 + Math.floor(Math.random() * 901); // +100..+1000
+          karma += growth;
+          day.karma = karma;
+          day.karmaGrowth = growth;
+        }
+      });
+    });
   });
 }
 
